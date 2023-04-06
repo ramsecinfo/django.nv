@@ -1,0 +1,31 @@
+stages:
+  - build
+  - test
+  - integration
+  - staging
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "This is a build step"
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step"
+
+integration:
+  stage: integration
+  script:
+    - echo "This is an integration step"
+
+staging:
+  stage: staging
+  script:
+    - echo "This is an integration step"
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step"
