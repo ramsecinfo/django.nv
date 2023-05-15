@@ -12,9 +12,8 @@ build:       # this is job named build, it can be anything, job1, job2, etc.,
 test:
   stage: test
   script:
-    - echo "This is a test step"
-    # ************ Non zero exit code, fails a job. ************ #
-    - exit 1
+     - execute_script_that_will_fail
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
 
 integration:        # integration job under stage integration.
   stage: integration
