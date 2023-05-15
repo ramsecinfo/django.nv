@@ -8,11 +8,15 @@ build:       # this is job named build, it can be anything, job1, job2, etc.,
   stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
   script:
     - echo "This is a build step"  # We are running an echo command, but it can be any command.
+    - echo "{\"vulnerability\":\"SQL Injection\"}" > vulnerabilities.json
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the output.json file
 
 test:
   stage: test
   script:
-     - execute_script_that_will_fail
+    - echo "This is a test step."
+    - exit 1         # Non zero exit code, fails a job.
   allow_failure: true   #<--- allow the build to fail but don't mark it as such
 
 integration:        # integration job under stage integration.
@@ -23,10 +27,4 @@ integration:        # integration job under stage integration.
 prod:
   stage: prod
   script:
-    - echo "This is a deploy step."
-someScan:
-  script: ./security-tool.sh    # <-- this tool generates vulnerabilities.json as output
-  artifacts:                    # <--- To save results, we use artifacts tag
-    paths:                      # <--- We then give the path/paths of the scan result files we want to store for further processing
-    - vulnerabilities.json                  #<--- The filename
-    expire_in: 1 week       # <--- To save disk space, we want to store only for 1 week
+    - echo "This is a deploy step."     # <--- To save disk space, we want to store only for 1 week
