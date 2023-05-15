@@ -32,6 +32,11 @@ test:
    - source env/bin/activate
    - pip install -r requirements.txt
    - python manage.py test taskManager
+   release:
+  stage: release
+  script:
+   - docker build -t $CI_REGISTRY_IMAGE .  # Build the application into Docker image
+   - docker push $CI_REGISTRY_IMAGE        # Push the image into registry
 
 integration:
   stage: integration
