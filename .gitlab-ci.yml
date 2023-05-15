@@ -1,34 +1,47 @@
-stages:   # Dictionary
- - build   # this is build stage
- - test    # this is test stage
- - integration # this is an integration stage
- - prod       # this is prod/production stage
+image: docker:20.10  # To run all jobs in this pipeline, use a latest docker image
 
-build:       # this is job named build, it can be anything, job1, job2, etc.,
-  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+services:
+  - docker:dind       # To run all jobs in this pipeline, use a docker image which contains a docker daemon running inside (dind - docker in docker). Reference: https://forum.gitlab.com/t/why-services-docker-dind-is-needed-while-already-having-image-docker/43534
+
+stages:
+  - build
+  - test
+  - release
+  - preprod
+  - integration
+  - prod
+
+build:
+  stage: build
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
   script:
-    - echo "This is a build step"  # We are running an echo command, but it can be any command.
-    
-  
+   - virtualenv env                       # Create a virtual environment for the python application
+   - source env/bin/activate              # Activate the virtual environment
+   - pip install -r requirements.txt      # Install the required third party packages as defined in requirements.txt
+   - python manage.py check               # Run checks to ensure the application is working fine
+
 test:
   stage: test
+  image: python:3.6
+  before_script:
+   - pip3 install --upgrade virtualenv
   script:
-    - echo "This is a test step."
-    - exit 1         # Non zero exit code, fails a job.
-  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+   - virtualenv env
+   - source env/bin/activate
+   - pip install -r requirements.txt
+   - python manage.py test taskManager
 
 integration:
   stage: integration
   script:
-    - echo "this is an output" > output.txt
+    - echo "This is an integration step"
     - exit 1
-  artifacts:
-    paths: [output.txt]
-    when: always
-  allow_failure: true
+  allow_failure: true # Even if the job fails, continue to the next stages
 
 prod:
   stage: prod
   script:
     - echo "This is a deploy step."
-  when: manual   #<-- A human has to click a button (play button in Gitlab) for this task to
+  when: manual  # <-- this job will not be executed by GitLab automatically
