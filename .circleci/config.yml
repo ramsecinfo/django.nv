@@ -17,6 +17,19 @@ jobs:
           pip install -r requirements.txt
           python manage.py test taskManager
 
+  oast:
+    machine: true
+    steps:
+      - checkout
+
+      - run:
+          command: docker run -v $(pwd):/src --rm hysnsec/safety check -r /src/requirements.txt --json | tee oast-results.json || true
+
+      - store_artifacts:
+          path: oast-results.json
+          destination: safety-artifact
+          when: always
+
   integration:
     docker:
       - image: python:3.6
@@ -26,6 +39,7 @@ jobs:
           command: |
             echo "This is an integration step"
             exit 1
+          when: on_fail                    # Even if the job fails, continue to the next stages
 
   prod:
     docker:
@@ -39,6 +53,16 @@ workflows:
   django:
     jobs:
       - build
-      - test
-      - integration
-      - prod
+      - test:
+          requires:
+            - build
+      - oast:
+          requires:
+            - test
+      - integration:
+          requires:
+            - oast
+      - prod:
+          type: approval
+          requires:
+            - integration
