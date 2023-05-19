@@ -41,30 +41,38 @@ jobs:
           pip install -r requirements.txt
           python manage.py test taskManager
 
-  oast-frontend:
+  oast-snyk:
     runs-on: ubuntu-20.04
     needs: test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
+      - uses: snyk/actions/setup@master
+      - uses: actions/setup-go@v1
+        with:
+          go-version: "1.13"
 
       - uses: actions/setup-node@v2
         with:
           node-version: '10.x'
 
-      - run: npm install
+      - name: Install Node modules
+        run: npm install
 
-      - run: docker run --rm -v $(pwd):/src -w /src hysnsec/retire --outputformat json --outputpath retirejs-report.json --severity high
-        continue-on-error: true
+      - name: Run Snyk
+        run: snyk test --json > snyk-results.json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true             # allow the build to fail, similar to allow_failure: true
 
       - uses: actions/upload-artifact@v2
         with:
-          name: RetireJS
-          path: retirejs-report.json
-        if: always()                        # what is this for?
+          name: Snyk
+          path: snyk-results.json
+        if: always()        # what is this for?
 
   integration:
     runs-on: ubuntu-20.04
-    needs: oast-frontend
+    needs: oast-snyk
     steps:
       - run: echo "This is an integration step"
       - run: exit 1
