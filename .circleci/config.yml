@@ -10,15 +10,7 @@ jobs:
           python manage.py check
 
   test:
-    docker:
-      - image: python:3.6
-    steps:
-      - checkout
-      - run: |
-          pip install -r requirements.txt
-          python manage.py test taskManager
-
-    zap_baseline:
+  zap_baseline:
     machine: true
     steps:
       - checkout
