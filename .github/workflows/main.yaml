@@ -1,3 +1,4 @@
+
 name: Django                                  # workflow name
 
 on:
@@ -42,22 +43,21 @@ jobs:
           python manage.py test taskManager
 
 
-  zap_baseline:
-     runs-on: ubuntu-20.04
-     needs: test
-     steps:
+      nuclei-scan:
+    runs-on: ubuntu-20.04
+    needs: test
+    steps:
       - run: |
-           docker pull owasp/zap2docker-stable:2.10.0
-           docker run --user root --rm -v $(pwd):/zap/wrk:rw -w /zap owasp/zap2docker-stable:2.10.0 zap-baseline.py -t ${{ secrets.zap }} -J zap-output.json
+           docker run --user $(id -u):$(id -g) -w /nuclei -v $(pwd):/nuclei:rw --rm projectdiscovery/nuclei:v2.9.1 -u https://www.celestialsys.com -j -o nuclei-output.json
 
       - uses: actions/upload-artifact@v2
         with:
-          name: ZAP Scan
-          path: zap-output.json
+          name: nuclei scan
+          path: nuclei-output.json
         if: always()        # what is this for?
 
   prod:
     runs-on: ubuntu-20.04
-    needs: zap_baseline
+    needs: nuclei-scan
     steps:
       - run: echo "This is a deploy step."
