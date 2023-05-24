@@ -1,7 +1,7 @@
 name: Django                                  # workflow name
 
 on:
-  push:
+  push:                                       
     branches:                                 # similar to "only" in GitLab
       - main
 
@@ -41,45 +41,23 @@ jobs:
           pip install -r requirements.txt
           python manage.py test taskManager
 
-  oast-snyk:
-    runs-on: ubuntu-20.04
-    needs: test
-    steps:
-      - uses: actions/checkout@master
-      - uses: snyk/actions/setup@master
-      - uses: actions/setup-go@v1
-        with:
-          go-version: "1.13"
 
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '10.x'
-
-      - name: Install Node modules
-        run: npm install
-
-      - name: Run Snyk
-        run: snyk test --json > snyk-results.json
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true             # allow the build to fail, similar to allow_failure: true
+  zap_baseline:
+     runs-on: ubuntu-20.04
+     needs: test
+     steps:
+      - run: |
+           docker pull owasp/zap2docker-stable:2.10.0
+           docker run --user root --rm -v $(pwd):/zap/wrk:rw -w /zap owasp/zap2docker-stable:2.10.0 zap-baseline.py -t ${{ secrets.PROD_URL }} -J zap-output.json
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Snyk
-          path: snyk-results.json
+          name: ZAP Scan
+          path: zap-output.json
         if: always()        # what is this for?
-
-  integration:
-    runs-on: ubuntu-20.04
-    needs: oast-snyk
-    steps:
-      - run: echo "This is an integration step"
-      - run: exit 1
-        continue-on-error: true
 
   prod:
     runs-on: ubuntu-20.04
-    needs: integration
+    needs: zap_baseline
     steps:
       - run: echo "This is a deploy step."
