@@ -9,7 +9,7 @@ jobs:
           pip install -r requirements.txt
           python manage.py check
 
-  test:
+ 
   zap_baseline:
     machine: true
     steps:
@@ -35,12 +35,9 @@ workflows:
   django:
     jobs:
       - build
-      - test:
-          requires:
-            - build 
       - zap_baseline:
           requires:
-            - test
+            
       - prod:
           type: approval
           requires:
