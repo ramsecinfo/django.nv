@@ -1,44 +1,118 @@
+[15:08] Bharath Kandukoori
+
+
+
 
 jobs:
-  build:
-    docker:
-      - image: python:3.6                   # similar to "image" in GitLab
-    steps:
-      - checkout
-      - run: |                              # similar to "script" in GitLab
-          pip install -r requirements.txt
-          python manage.py check
 
- 
-  zap_baseline:
-    machine: true
-    steps:
-      - checkout
+  build:
 
-      - run: |
-          docker pull owasp/zap2docker-stable:2.10.0
-          docker run --user root --rm -v $(pwd):/zap/wrk:rw -w /zap owasp/zap2docker-stable:2.10.0 zap-baseline.py -t ${zap} -J zap-output.json || true
+    docker:
 
-      - store_artifacts:
-          path: zap-output.json
-          destination: zap-artifact
+      - image: python:3.6                   # similar to "image" in GitLab
 
-  prod:
-    docker:
-      - image: python:3.6
-    steps:
-      - checkout
-      - run: echo "This is a deploy step."
+    steps:
+
+      - checkout
+
+      - run: |                              # similar to "script" in GitLab
+
+          pip install -r requirements.txt
+
+          python manage.py check
+
+ 
+
+  test:
+
+    docker:
+
+      - image: python:3.6
+
+    steps:
+
+      - checkout
+
+      - run: |
+
+          pip install -r requirements.txt
+
+          python manage.py test taskManager
+
+ 
+
+  zap_baseline:
+
+    machine: true
+
+    steps:
+
+      - checkout
+
+ 
+
+      - run: |
+
+          docker pull owasp/zap2docker-stable:2.10.0
+
+          docker run --user root --rm -v $(pwd):/zap/wrk:rw -w /zap owasp/zap2docker-stable:2.10.0 zap-baseline.py -t ${zap} -J zap-output.json || true
+
+ 
+
+      - store_artifacts:
+
+          path: zap-output.json
+
+          destination: zap-artifact
+
+ 
+
+  prod:
+
+    docker:
+
+      - image: python:3.6
+
+    steps:
+
+      - checkout
+
+      - run: echo "This is a deploy step."
+
+ 
 
 workflows:
-  version: 2
-  django:
-    jobs:
-      - build
-      - zap_baseline:
-          requires:
-            
-      - prod:
-          type: approval
-          requires:
-            - zap_baseline
+
+  version: 2
+
+  django:
+
+    jobs:
+
+      - build
+
+      - test:
+
+          requires:
+
+            - build 
+
+      -  zap_baseline:
+
+          requires:
+
+            - test
+
+      - prod:
+
+          type: approval
+
+          requires:
+
+            -  zap_baseline
+
+
+
+
+
+
